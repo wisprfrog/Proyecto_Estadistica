@@ -1,0 +1,1 @@
+This is a C++ program which calculates mean, median and mode of agrupated and non-agrupated data
