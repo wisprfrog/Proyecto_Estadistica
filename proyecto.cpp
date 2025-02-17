@@ -1,6 +1,8 @@
-#include <iostream>
+#include <iostream> 
 #include <algorithm>
 #include <cmath>
+#include <map>
+
 using namespace std;
 
 struct fila_tabla {
@@ -17,21 +19,21 @@ struct fila_tabla {
     double redondear_entero_cercano(double &numero);
 
     //Calculos de datos no agrupados
-        double calculo_media_no_agrupados(int &N, double lista_numeros[]); //Mario
+        double calculo_media_no_agrupados(int &N, double lista_numeros[]); //Brandom
         double calculo_mediana_no_agrupados(int &N, double lista_numeros[]); //Brandom
         double calculo_moda_no_agrupados(int &N, double lista_numeros[]); //Mau
 
     //Calculos de datos agrupados
         double calculo_regla_sturges(int &N); //Willy
-        double calculo_amplitud_intervalo(double &dato_menor, double &dato_mayor, double &K); //Mario
+        double calculo_amplitud_intervalo(double &dato_menor, double &dato_mayor, double &K); //Brandom
         void calculo_de_intervalos(fila_tabla fila[], double &K, double &A, double &dato_menor); //Willy
         void calculo_de_marcas_de_clase(fila_tabla filas_de_tabla[], double &K); //Mau
         void calculo_de_frec_abs(fila_tabla filas_de_tabla[], double &K, double lista_numeros[], int &N); //Brandom
         void calculo_de_frec_abs_acum(fila_tabla filas_de_tabla[], double &K); //Willy
-        double calculo_media_agrupados(fila_tabla filas_de_tabla[], double &K, int &N); //Mario
+        double calculo_media_agrupados(fila_tabla filas_de_tabla[], double &K, int &N); //Brandom
 
         int buscar_intervalo_mediana(fila_tabla filas_de_tabla[], double &K, int &N); //Brandom
-        double calculo_mediana_agrupados(int &pos_interv_sup_mediana, fila_tabla filas_de_tabla[], double &K); //Brandom
+        double calculo_mediana_agrupados(int &interv_mediana, fila_tabla filas_de_tabla[], double &K, int &N); //Brandom
 
         int buscar_intervalo_moda(fila_tabla filas_de_tabla[], double &K); //Mau
         double calculo_moda_agrupados(int &pos_interv_moda, fila_tabla fila_de_tabla[], double &K); //Willy
@@ -49,10 +51,10 @@ int main() {
     //Declaracion de variables para datos agrupados
     double media_agrupados, mediana_agrupados, moda_agrupados;
     double K, A, dato_menor, dato_mayor;
-    int pos_interv_sup_mediana, pos_interv_moda;
+    int interv_mediana, pos_interv_moda;
     fila_tabla *filas_de_tabla;
 
-    do {
+    do { 
         cout<<"CALCULO DE MEDIA, MEDIANA Y MODA\n\n";
         cout<<"\t--- MENU ---\n";
         cout<<"\t1. Datos no agrupados\n";
@@ -124,8 +126,8 @@ int main() {
 
                 media_agrupados = calculo_media_agrupados(filas_de_tabla, K, N);
 
-                pos_interv_sup_mediana = buscar_intervalo_mediana(filas_de_tabla, K, N);
-                mediana_agrupados = calculo_mediana_agrupados(pos_interv_sup_mediana, filas_de_tabla, K);
+                interv_mediana = buscar_intervalo_mediana(filas_de_tabla, K, N);
+                mediana_agrupados = calculo_mediana_agrupados(interv_mediana, filas_de_tabla, K, N);
 
                 pos_interv_moda = buscar_intervalo_moda(filas_de_tabla, K);
                 moda_agrupados = calculo_moda_agrupados(pos_interv_moda, filas_de_tabla, K);
@@ -210,10 +212,170 @@ double redondear_entero_cercano(double &numero) {
     return redondeado;
 }
 
-//Calculos de datos no agrupados
-double calculo_media_agrupados(int &N, double lista_numeros[]) {
 
+
+//Calculos de datos no agrupados
+double calculo_media_no_agrupados(int &N, double lista_numeros[]){//Brandom
+    double media = 0;
+
+    for(int i = 0; i<N; i++) media += lista_numeros[i];
+
+    media /= N;
+
+    return media;
 }
 
-//Calculos de datos agrupados
+double calculo_mediana_no_agrupados(int &N, double lista_numeros[]){//Brandom
+    int mitad = N/2;
+    
+    double mediana = lista_numeros[mitad];
 
+    return mediana;
+} 
+
+double calculo_moda_no_agrupados(int &N, double lista_numeros[]){//Mau
+    //Se utilizó el algoritmo counting sort para el cálculo de la moda
+    
+    // map<tipo de indice, tipo de valor a almacenar>
+    map<double, int> conteo; //Valor de la lista, su conteo (int)
+
+    //nombre_mapa[valor_a_incrementar]++;
+    double numero;
+    for(int i=0; i < N; i++){
+        numero = lista_numeros[i];
+        conteo[numero]++;
+    }
+
+    //8 9 10 8 9 1 2
+    //2 2 1      1 1
+
+    double valor_mayor = -1;
+    int repeticiones = INT_MIN; 
+
+    //{indice, valor}
+    //{first, second}
+    for(auto valor : conteo){
+        if(valor.second > repeticiones){
+            valor_mayor = valor.first;
+            repeticiones = valor.second;
+        }
+    }  
+
+    return valor_mayor;
+} 
+
+//Calculos de datos agrupados
+double calculo_regla_sturges(int &N){ //Willy
+    double ret = 1 + 3.322*log10(N);
+
+    return ret;
+}
+
+double calculo_amplitud_intervalo(double &dato_menor, double &dato_mayor, double &K){//Brandom
+    double A = (dato_mayor - dato_menor) / K;
+
+    return A;
+}
+
+void calculo_de_intervalos(fila_tabla fila[], double &K, double &A, double &dato_menor){//Willy
+    fila[0].limite_inferior = dato_menor - 1.0;     ///Se modifica el arreglo de la estructura directamente
+    fila[0].limite_superior = fila[0].limite_inferior + A;
+
+    //Esta 1-indexado porque ya se hicieron los calculos para la primera fila 0
+    for(int i = 1; i < K; i++){     
+        fila[i].limite_inferior = fila[i-1].limite_superior + 1.0; ///Limite de la fila anterior + 1
+        fila[i].limite_superior = fila[i].limite_inferior + A;
+    }
+} 
+
+void calculo_de_marcas_de_clase(fila_tabla filas_de_tabla[], double &K){ //Mau
+    for(int i = 0; i < K; i++){
+        filas_de_tabla[i].marca_clase = (filas_de_tabla[i].limite_superior+filas_de_tabla[i].limite_inferior)/2;
+    }
+}
+ 
+void calculo_de_frec_abs(fila_tabla filas_de_tabla[], double &K, double lista_numeros[], int &N){//Brandom
+    int guardar_en_intervalo = 0;
+
+    double lim_inf_actual = filas_de_tabla[guardar_en_intervalo].limite_inferior;
+    double lim_sup_actual = filas_de_tabla[guardar_en_intervalo].limite_superior;
+
+    double num_auxiliar;
+    for(int i=0; i < K;i ++){
+        num_auxiliar = lista_numeros[i];
+        
+        if(num_auxiliar < lim_inf_actual || num_auxiliar > lim_sup_actual){
+            guardar_en_intervalo++;
+            lim_inf_actual = filas_de_tabla[guardar_en_intervalo].limite_inferior;
+            lim_sup_actual = filas_de_tabla[guardar_en_intervalo].limite_superior;
+        }
+
+        filas_de_tabla[guardar_en_intervalo].frec_absoluta++;
+    }
+}
+
+void calculo_de_frec_abs_acum(fila_tabla filas_de_tabla[], double &K){//Willy
+    filas_de_tabla[0].frec_absoluta_acum = filas_de_tabla[0].frec_absoluta;
+
+    for(int i = 1; i < K; i++){
+        filas_de_tabla[i].frec_absoluta_acum = filas_de_tabla[i].frec_absoluta + filas_de_tabla[i-1].frec_absoluta_acum;
+        //sumatoria de frecuencias anteriores + frec actual
+    }
+} 
+
+double calculo_media_agrupados(fila_tabla filas_de_tabla[], double &K, int &N){//Brandom
+    double media = 0;
+    for(int i=0; i < K; i++) media += filas_de_tabla[i].marca_clase * filas_de_tabla[i].frec_absoluta;
+
+    media /= N;
+
+    return media;
+}    
+
+int buscar_intervalo_mediana(fila_tabla filas_de_tabla[], double &K, int &N){//Brandom
+    double posible_mediana = N/2;
+    int lim_superior = 1;
+
+    int intervalo_mediana = 0;
+    while(filas_de_tabla[intervalo_mediana].frec_absoluta_acum < posible_mediana) intervalo_mediana++;
+
+    return intervalo_mediana;
+}
+
+double calculo_mediana_agrupados(int &interv_mediana, fila_tabla filas_de_tabla[], double &K, int &N){//Brandom
+    double mediana;
+    double frec_abs_acum_anterior = filas_de_tabla[interv_mediana - 1].frec_absoluta_acum;
+    double frec_abs_mediana = filas_de_tabla[interv_mediana].frec_absoluta;
+    double limite_superior = filas_de_tabla[interv_mediana].limite_superior;
+    double limite_inferior = filas_de_tabla[interv_mediana].limite_inferior;
+    
+    mediana = ((N/2) - frec_abs_acum_anterior) / frec_abs_mediana;
+    mediana *= (limite_superior - limite_inferior);
+
+    mediana += limite_inferior;
+
+    return mediana;
+}
+
+int buscar_intervalo_moda(fila_tabla filas_de_tabla[], double &K){ //Mau
+    int posicion, frec_max = INT_MIN;
+    for(int i = 0; i < K; i++){
+        if(filas_de_tabla[i].frec_absoluta > frec_max){
+            frec_max = filas_de_tabla[i].frec_absoluta;
+            posicion = i;
+        }
+    }
+    return posicion;
+}
+
+double calculo_moda_agrupados(int &pos_interv_moda, fila_tabla fila_de_tabla[], double &K){//Willy
+    double delta_1, delta_2, moda;
+
+    delta_1 = fila_de_tabla[pos_interv_moda].frec_absoluta - fila_de_tabla[pos_interv_moda - 1].frec_absoluta; //nj - nj-1
+    delta_2 = fila_de_tabla[pos_interv_moda].frec_absoluta - fila_de_tabla[pos_interv_moda + 1].frec_absoluta; //nj - nj+1
+
+    moda = fila_de_tabla[pos_interv_moda].limite_inferior;  //Se divide la formula en 2 partes, solo por comodidad
+    moda += ((delta_1 / (delta_1 + delta_2)) * (fila_de_tabla[pos_interv_moda].limite_superior - fila_de_tabla[pos_interv_moda].limite_inferior));
+
+    return moda;
+}
