@@ -14,7 +14,7 @@ struct fila_tabla {
 };
 
 //Declaracion de funciones
-    void entrada_de_datos(int &N, double *lista_numeros[]);
+    void entrada_de_datos(int &N, double lista_numeros[]);
     char regresar_al_menu();
     double redondear_entero_cercano(double &numero);
 
@@ -43,6 +43,7 @@ int main() {
     char opc_regresar_menu;
 
     int N;
+    int int_K;
     double *lista_numeros = nullptr;
 
     //Declaracion de variables para datos no agrupados
@@ -115,7 +116,8 @@ int main() {
                 A = calculo_amplitud_intervalo(dato_menor, dato_mayor, K);
                 A = redondear_entero_cercano(A);
 
-                filas_de_tabla = new fila_tabla[K];
+                int_K = K;
+                filas_de_tabla = new fila_tabla[int_K];
 
                 calculo_de_intervalos(filas_de_tabla, K, A, dato_menor);
 
@@ -161,6 +163,7 @@ int main() {
                 system("cls");
                 cout<<"Ingreso una opcion invalida, digite otra...\n";
                 system("pause");
+                break;
         }
 
         if (lista_numeros != nullptr) {
@@ -175,7 +178,7 @@ int main() {
 }
 
 //Definicion de funciones
-void entrada_de_datos(int N, double lista_numeros[]) {
+void entrada_de_datos(int &N, double lista_numeros[]) {
     for (int i=0; i<N; i++) {
         cout<<"Dato numero: "<<i+1<<": ";
         cin>>lista_numeros[i];
