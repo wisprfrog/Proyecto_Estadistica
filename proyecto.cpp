@@ -1,7 +1,4 @@
-#include <iostream> 
-#include <algorithm>
-#include <cmath>
-#include <map>
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -9,8 +6,8 @@ struct fila_tabla {
     double limite_inferior = -1;
     double limite_superior = -1;
     double marca_clase = -1;
-    double frec_absoluta = -1;
-    double frec_absoluta_acum = -1;
+    double frec_absoluta = 0;
+    double frec_absoluta_acum = 0;
 };
 
 //Declaracion de funciones
@@ -28,6 +25,8 @@ struct fila_tabla {
         double calculo_amplitud_intervalo(double &dato_menor, double &dato_mayor, double &K); //Brandom
         void calculo_de_intervalos(fila_tabla fila[], double &K, double &A, double &dato_menor); //Willy
         void calculo_de_marcas_de_clase(fila_tabla filas_de_tabla[], double &K); //Mau
+
+
         void calculo_de_frec_abs(fila_tabla filas_de_tabla[], double &K, double lista_numeros[], int &N); //Brandom
         void calculo_de_frec_abs_acum(fila_tabla filas_de_tabla[], double &K); //Willy
         double calculo_media_agrupados(fila_tabla filas_de_tabla[], double &K, int &N); //Brandom
@@ -61,6 +60,7 @@ int main() {
         cout<<"\t1. Datos no agrupados\n";
         cout<<"\t2. Datos agrupados\n";
         cout<<"\t3. Salir\n";
+        
         cin>>opc_menu_principal;
 
         switch(opc_menu_principal) {
@@ -157,6 +157,9 @@ int main() {
 
                 break;
 
+            
+                
+
             default:
                 lista_numeros = nullptr;
 
@@ -180,7 +183,7 @@ int main() {
 //Definicion de funciones
 void entrada_de_datos(int &N, double lista_numeros[]) {
     for (int i=0; i<N; i++) {
-        cout<<"Dato numero: "<<i+1<<": ";
+        cout<<"Dato numero "<<i+1<<": ";
         cin>>lista_numeros[i];
     }
 }
@@ -230,8 +233,14 @@ double calculo_media_no_agrupados(int &N, double lista_numeros[]){//Brandom
 
 double calculo_mediana_no_agrupados(int &N, double lista_numeros[]){//Brandom
     int mitad = N/2;
+    double mediana;
     
-    double mediana = lista_numeros[mitad];
+    if(N % 2 == 0){
+        mediana = (lista_numeros[mitad-1] + lista_numeros[(mitad)])/2;
+    }
+    else{
+        mediana = lista_numeros[mitad];
+    }
 
     return mediana;
 } 
@@ -270,12 +279,14 @@ double calculo_moda_no_agrupados(int &N, double lista_numeros[]){//Mau
 //Calculos de datos agrupados
 double calculo_regla_sturges(int &N){ //Willy
     double ret = 1 + 3.322*log10(N);
-
+    // cout << "\nK = " << ret << "\n";
     return ret;
 }
 
 double calculo_amplitud_intervalo(double &dato_menor, double &dato_mayor, double &K){//Brandom
+    // cout << "\nDato mayor: " << dato_mayor << "\nDato menor: " << dato_menor << "\n";
     double A = (dato_mayor - dato_menor) / K;
+    // cout << "\nAmplitud rango: " << A << "\n";
 
     return A;
 }
@@ -283,17 +294,23 @@ double calculo_amplitud_intervalo(double &dato_menor, double &dato_mayor, double
 void calculo_de_intervalos(fila_tabla fila[], double &K, double &A, double &dato_menor){//Willy
     fila[0].limite_inferior = dato_menor - 1.0;     ///Se modifica el arreglo de la estructura directamente
     fila[0].limite_superior = fila[0].limite_inferior + A;
+    
 
+    // cout << "\nIntervalos\n";
+    // cout << fila[0].limite_inferior << " - " << fila[0].limite_superior << "\n";
     //Esta 1-indexado porque ya se hicieron los calculos para la primera fila 0
     for(int i = 1; i < K; i++){     
-        fila[i].limite_inferior = fila[i-1].limite_superior + 1.0; ///Limite de la fila anterior + 1
+        fila[i].limite_inferior = fila[i-1].limite_superior + 1; ///Limite de la fila anterior + 1
         fila[i].limite_superior = fila[i].limite_inferior + A;
+        // cout << fila[i].limite_inferior << " - " << fila[i].limite_superior << "\n";
     }
 } 
 
 void calculo_de_marcas_de_clase(fila_tabla filas_de_tabla[], double &K){ //Mau
+    // cout << "\nMarcas de clase\n";
     for(int i = 0; i < K; i++){
         filas_de_tabla[i].marca_clase = (filas_de_tabla[i].limite_superior+filas_de_tabla[i].limite_inferior)/2;
+        // cout << filas_de_tabla[i].marca_clase << endl;
     }
 }
  
@@ -304,8 +321,13 @@ void calculo_de_frec_abs(fila_tabla filas_de_tabla[], double &K, double lista_nu
     double lim_sup_actual = filas_de_tabla[guardar_en_intervalo].limite_superior;
 
     double num_auxiliar;
-    for(int i=0; i < K;i ++){
+    // cout << "\nFrecuencias absolutas\n";
+    
+    for(int i=0; i < N;i ++){
         num_auxiliar = lista_numeros[i];
+        // cout << "\nNumero actual : " << num_auxiliar << "\n";
+
+        // cout << "\nLim Inferior Actual: " << lim_inf_actual << "\n Lim Superior Actual: " << lim_sup_actual << "\n";
         
         if(num_auxiliar < lim_inf_actual || num_auxiliar > lim_sup_actual){
             guardar_en_intervalo++;
@@ -314,7 +336,15 @@ void calculo_de_frec_abs(fila_tabla filas_de_tabla[], double &K, double lista_nu
         }
 
         filas_de_tabla[guardar_en_intervalo].frec_absoluta++;
+        // cout << "\nFrecuencia absoluta: " << filas_de_tabla[guardar_en_intervalo].frec_absoluta << "\n";
     }
+
+    // for (int i = 0; i < K; i++) {
+    //     cout << "| " << filas_de_tabla[i].limite_inferior << " - " << filas_de_tabla[i].limite_superior
+    //          << " |      " << filas_de_tabla[i].frec_absoluta << "     |\n";
+    // }
+
+
 }
 
 void calculo_de_frec_abs_acum(fila_tabla filas_de_tabla[], double &K){//Willy
